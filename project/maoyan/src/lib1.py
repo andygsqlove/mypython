@@ -26,7 +26,12 @@ class Maoyan:
             return response.text
 
     @staticmethod
-    def parse_one_page(html):
+    def parse_one_page_for_re(html):
+        '''
+        This funtion parse source code use re module.
+        :param html: html string
+        :return: not
+        '''
         parttern = re.compile('<dd>.*?board-index.*?>(.*?)</i>.*?'
                              '<p.*?class="name">.*?>(.*?)</a>.*?'
                              '<p.*?class="star">(.*?)</p>.*?'
@@ -42,18 +47,33 @@ class Maoyan:
                 'releasetime':item[3].strip()[5:],
                 'score':item[4].strip() + item[5].strip()
             }
-            # print(item[0])
-            # print(item[1])
-            # print(item[2])
-            # print(item[3])
-            # print(item[4])
-            # print(item[5])
+
+    @staticmethod
+    def parse_one_page_for_beaufulsoup(html):
+        '''
+        This funtion parse source code use BeautifulSoup module.
+        :param html: html string
+        :return: not
+        '''
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html,'lxml')
+        for item in soup.findAll('dd'):
+            yield {
+                'id': item.find(class_ = "board-index").string.strip(),
+                'name': item.find(class_ = "name").string.strip(),
+                'star': item.find(class_ = "star").string.strip()[3:],
+                'releasetime': item.find(class_ = "releasetime").string.strip()[5:],
+                'score': item.find(class_ = "integer").string.strip() +
+                         item.find(class_="fraction").string.strip()
+            }
+
 
 def test_lib1():
     base_url = 'http://maoyan.com/board/4?offset='
     for i in range(0,100,10):
         url = base_url + str(i)
         html = Maoyan.get_onepage(url)
-        datas = Maoyan.parse_one_page(html)
+        #datas = Maoyan.parse_one_page_for_re(html)
+        datas = Maoyan.parse_one_page_for_beaufulsoup(html)
         for data in datas:
             print(data)
